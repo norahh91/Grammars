@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ufwb version="1.14">
+    <grammar name="HFS+ Volume Header" start="id:1" author="Patrick Olsen" email="patrick.olsen@sysforensics.org" uti="public.data" complete="yes">
+        <description>Grammar to parse the HFS+ Volume Header.</description>
+        <structure name="Defaults" id="2" length="1024" encoding="ISO_8859-1:1987" endian="big" signed="no"/>
+        <structure name="HFSPlusExtentDescriptor" id="4" length="0" repeatmin="8" repeatmax="8" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <description>struct HFSPlusExtentDescriptor {
+    UInt32                  startBlock;
+    UInt32                  blockCount;
+};
+typedef struct HFSPlusExtentDescriptor HFSPlusExtentDescriptor;</description>
+            <number name="startBlock" id="5" fillcolor="9437FF" type="integer" length="4"/>
+            <number name="blockCount" id="6" fillcolor="9437FF" type="integer" length="4"/>
+        </structure>
+        <structure name="HFSPlusForkData" id="8" repeatmin="5" repeatmax="5" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <description>https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#ForkDataStructure
+
+struct HFSPlusForkData {
+    UInt64                  logicalSize;
+    UInt32                  clumpSize;
+    UInt32                  totalBlocks;
+    HFSPlusExtentRecord     extents;
+};
+typedef struct HFSPlusForkData HFSPlusForkData;
+ 
+typedef HFSPlusExtentDescriptor HFSPlusExtentRecord[8];</description>
+            <number name="logicalSize" id="9" fillcolor="9437FF" type="integer" length="8"/>
+            <number name="clumpSize" id="10" fillcolor="9437FF" type="integer" length="4"/>
+            <number name="totalBlocks" id="11" fillcolor="9437FF" type="integer" length="4"/>
+            <structref name="HFSPlusExtentDescriptor" id="12" structure="id:4"/>
+        </structure>
+        <structure name="attributes" id="14" length="4" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <binary name="Attrib - Reserved1" id="15" fillcolor="FF84FF" length="7" lengthunit="bit">
+                <description>https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#VolumeAttributes
+
+enum {
+    /* Bits 0-6 are reserved */
+    kHFSVolumeHardwareLockBit       =  7,
+    kHFSVolumeUnmountedBit          =  8,
+    kHFSVolumeSparedBlocksBit       =  9,
+    kHFSVolumeNoCacheRequiredBit    = 10,
+    kHFSBootVolumeInconsistentBit   = 11,
+    kHFSCatalogNodeIDsReusedBit     = 12,
+    kHFSVolumeJournaledBit          = 13,
+    /* Bit 14 is reserved */
+    kHFSVolumeSoftwareLockBit       = 15
+    /* Bits 16-31 are reserved */
+};</description>
+            </binary>
+            <binary name="Attrib - HadrwareLock" id="16" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - Unmounted" id="17" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - SparedBlock" id="18" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - NoCacheRequired" id="19" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - Inconsistent" id="20" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - CatalogNodeIDs" id="21" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - Journal - Reserved" id="22" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - Reserved2" id="23" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - SoftwareLock" id="24" fillcolor="FF84FF" length="1" lengthunit="bit"/>
+            <binary name="Attrib - Reserved3" id="25" fillcolor="FF84FF" length="16" lengthunit="bit"/>
+        </structure>
+        <structure name="FinderInfo" id="27" length="32" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <number name="finderInfo[0]" id="28" fillcolor="A9A9A9" type="integer" length="4"/>
+            <number name="finderInfo[1]" id="29" fillcolor="A9A9A9" type="integer" length="4"/>
+            <number name="finderInfo[2]" id="30" fillcolor="A9A9A9" type="integer" length="4"/>
+            <number name="finderInfo[3]" id="31" fillcolor="A9A9A9" type="integer" length="4"/>
+            <number name="finderInfo[4] - Reserved" id="32" fillcolor="A9A9A9" type="integer" length="4"/>
+            <number name="finderInfo[5]" id="33" fillcolor="A9A9A9" type="integer" length="4"/>
+            <binary name="volID_Part_1" id="34" fillcolor="EAEAEA" length="4"/>
+            <binary name="volID_Part_2" id="35" length="4"/>
+        </structure>
+        <structure name="Header" id="37" length="512" extends="id:2" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <description>struct HFSPlusVolumeHeader {
+    UInt16              signature;
+    UInt16              version;
+    UInt32              attributes;
+    UInt32              lastMountedVersion;
+    UInt32              journalInfoBlock;
+ 
+    UInt32              createDate;
+    UInt32              modifyDate;
+    UInt32              backupDate;
+    UInt32              checkedDate;
+ 
+    UInt32              fileCount;
+    UInt32              folderCount;
+ 
+    UInt32              blockSize;
+    UInt32              totalBlocks;
+    UInt32              freeBlocks;
+ 
+    UInt32              nextAllocation;
+    UInt32              rsrcClumpSize;
+    UInt32              dataClumpSize;
+    HFSCatalogNodeID    nextCatalogID;
+ 
+    UInt32              writeCount;
+    UInt64              encodingsBitmap;
+ 
+    UInt32              finderInfo[8];
+ 
+    HFSPlusForkData     allocationFile;
+    HFSPlusForkData     extentsFile;
+    HFSPlusForkData     catalogFile;
+    HFSPlusForkData     attributesFile;
+    HFSPlusForkData     startupFile;
+};
+typedef struct HFSPlusVolumeHeader HFSPlusVolumeHeader;</description>
+            <string name="Signature" id="38" fillcolor="FF2600" type="fixed-length" length="2">
+                <fixedvalues>
+                    <fixedvalue name="Magic" value="H+"/>
+                </fixedvalues>
+            </string>
+            <number name="Version" id="39" fillcolor="FF9300" type="integer" length="2"/>
+            <structref name="Attributes" id="40" structure="id:14"/>
+            <string name="MountedVersion" id="41" fillcolor="FEFB00" type="fixed-length" length="4" encoding="ISO_8859-1:1987"/>
+            <binary name="Journal Infoblock" id="42" fillcolor="8DF900" length="4">
+                <description>https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#JournalInfoBlock</description>
+            </binary>
+            <binary name="createDate" id="43" fillcolor="00FCFF" length="4"/>
+            <binary name="modifyDate" id="44" fillcolor="00FCFF" length="4"/>
+            <binary name="backupDate" id="45" fillcolor="00FCFF" length="4"/>
+            <binary name="checkedDate" id="46" fillcolor="00FCFF" length="4"/>
+            <number name="fileCount" id="47" fillcolor="0096FF" type="integer" length="4"/>
+            <number name="folderCount" id="48" fillcolor="0096FF" type="integer" length="4"/>
+            <number name="blockSize" id="49" fillcolor="FF40FF" type="integer" length="4"/>
+            <number name="totalBlocks" id="50" fillcolor="FF2F92" type="integer" length="4"/>
+            <number name="freeBlocks" id="51" fillcolor="FF7D78" type="integer" length="4"/>
+            <number name="nextAllocation" id="52" fillcolor="FFD478" type="integer" length="4"/>
+            <number name="rsrcClumpSize" id="53" fillcolor="FEFC78" type="integer" length="4"/>
+            <number name="dataClumpSize" id="54" fillcolor="FEFC78" type="integer" length="4"/>
+            <number name="nextCatalogID" id="55" fillcolor="D4FB78" type="integer" length="4"/>
+            <number name="writeCount" id="56" fillcolor="72FA78" type="integer" length="4"/>
+            <number name="encodingsBitmap" id="57" fillcolor="72FCD5" type="integer" length="8">
+                <description>https://developer.apple.com/legacy/library/technotes/tn/tn1150.html#TextEncodings</description>
+                <fixedvalues>
+                    <fixedvalue name="MacRoman" value="0"/>
+                    <fixedvalue name="MacJapanese" value="1"/>
+                    <fixedvalue name="MacChineseTrad" value="2"/>
+                    <fixedvalue name="MacKorean" value="3"/>
+                </fixedvalues>
+            </number>
+            <structref name="finderInfo" id="58" structure="id:27"/>
+            <structref name="HFSPlusForkData" id="59" structure="id:8"/>
+        </structure>
+        <structure name="HFS+ Header Volume" id="1" encoding="ISO_8859-1:1987" endian="big" signed="no">
+            <structref name="Defaults" id="61" structure="id:2"/>
+            <structref name="Header" id="62" structure="id:37"/>
+        </structure>
+    </grammar>
+</ufwb>
